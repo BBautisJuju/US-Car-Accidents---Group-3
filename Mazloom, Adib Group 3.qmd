@@ -1,0 +1,103 @@
+---
+title: "Improving Road Safety and Traffic Management: Data Analysis and Visualization of Traffic Accidents"
+subtitle: "Final Report"
+author: "Anthony Fitch, Adib Mazloom, Annabelle Petherbridge, Julia Bautista, & William Jackson"
+institute: "GBA 5910, Cal Poly Pomona"
+date: "`r Sys.Date()`"
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    code-fold: true
+    code-overflow: wrap
+    css: styles.css
+editor: visual
+execute: 
+  echo: true
+  freeze: auto
+---
+
+# Improvements on Driver Education and Safety
+
+```{r}
+# Load the tidyverse or readr
+library(tidyverse)
+
+# Import the CSV file
+data <- read_csv("cleaned.csv")
+
+# Preview the data
+head(data)
+
+```
+
+## What was the most common accident type?
+
+### Independent Variables & Dependent Variables
+
+-   Independent Variables (IV's)
+
+-   Type of Collision
+
+-   Dependent Variables (DV's): Rate per 100,000
+
+-   Rate per 100,000
+
+-   Severity of Accident
+
+### Data Wrangling
+
+-   Organized Data from multiple cities and states across the country throughout multiple years
+
+-   Clean missing values and remove values with no quantitative value
+
+-   Filter data sets to include accidents from cities with a minimum population and remove other values
+
+### Data Visualization
+
+-   Bar Charts to display frequency of specific accident types
+
+-   Boxplot to display severity of certain accident types
+
+### Analysis and Possible Solutions
+
+-   Altered drivers Ed courses to emphasize accident types and how to avoid them
+
+-   Increased training in situation surrounding accident types
+
+-   Altered behind the wheel driving instruction time for further instruction
+
+## Whats was the most common factor that caused the accident?
+
+-   Independent Variables (IV's)
+
+-   Cause of Accident
+
+-   Dependent Variables (DV's): Rate per 100,000
+
+-   Rate per 100,000
+
+-   Severity of Accident
+
+### Data Wrangling
+
+-   Organized Data from multiple cities and states across the country throughout multiple years
+
+-   Clean missing values and remove values with no quantitative value
+
+-   Filter data sets to include accidents from cities with a minimum population and remove other values
+
+### Data Visualization
+
+-   Bar Charts to display frequency of factors that caused the accident
+
+-   Box plot to display severity of certain accident factors
+
+### Analysis and Possible Solutions
+
+-   Altered drivers Ed courses to emphasize accident causes and why they are deadly
+
+-   Increased education in accident severity and outcomes of poor driving habits
+
+-   Altered behind the wheel driving instruction time for further instruction
