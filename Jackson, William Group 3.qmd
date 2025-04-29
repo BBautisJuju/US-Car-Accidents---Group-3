@@ -1,0 +1,83 @@
+---
+title: "Data Wrangling of Final Project"
+author: "William Jackson"
+date: "`r format(Sys.time())`"
+format: 
+  html:
+    theme: darkly
+    toc: true
+    toc-location: right
+    toc-depth: 4
+    code-fold: false
+    code-line-numbers: true
+    code-link: true
+    number-sections: false
+    embed-resources: true
+    df-print: paged
+execute: 
+  freeze: auto
+  echo: true
+  warning: false
+  error: false
+---
+
+## Packages 
+
+```{r}
+library(readxl)
+
+```
+
+## Upload the CSV File 
+
+> ### This file will be uploaded from the original CSV files, one will be the data set that will be used for a geographical representation at a national level and then a local level. I will look at specifically areas within the Los Angeles/Orange County for more relevant information. 
+
+```{r}
+
+lines <- readLines("C:/Users/willi/OneDrive/Desktop/GBA-5910-Assignments-/Final Project GBA 5910 4/Raw Data File for City locations of Accidents.csv")
+length(lines)
+head(lines)
+
+Raw_Data_Geography <- read.csv("C:/Users/willi/OneDrive/Desktop/GBA-5910-Assignments-/Final Project GBA 5910 4/Raw Data File for City locations of Accidents.csv")
+
+```
+
+## Data Cleaning 
+
+```{r}
+
+Clean_Data_Geography <-na.omit(Raw_Data_Geography)
+
+# Headers 
+colnames(Clean_Data_Geography)
+
+
+# Filter the Geography for Only County and State 
+County_State_Geography <- State_County_Only <- Raw_Data_Geography[, c("State", "County")]
+
+# Confirmation of the Wrangling 
+print(head(State_County_Only, 50))
+
+#Visualize the file in a country with hues of blue and red by number of accidents 
+
+library(dplyr)
+
+# Count accidents per state
+accidents_by_state <- State_County_Only %>%
+  group_by(State) %>%
+  summarize(accident_count = n())
+
+
+library(ggplot2)
+
+# Create the bar plot with a color gradient
+ggplot(accidents_by_state, aes(x = reorder(State, -accident_count), y = accident_count, fill = accident_count)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red") +  # Color scale from blue to red
+  labs(title = "Number of Accidents by State (Lower 48 States)", 
+       x = "State", 
+       y = "Number of Accidents") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for readability
+  theme_minimal()  # Clean theme for better presentation
+
+```
