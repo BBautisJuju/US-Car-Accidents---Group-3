@@ -1,0 +1,162 @@
+---
+title: "Julia - US Car Accidents Analysis"
+format: revealjs
+editor: visual
+---
+
+# Import Data and Clean
+
+```{r}
+#install.packages("readr")
+library(readr)
+Data_Set_4 <- read_csv("Data_Set_4.csv")
+
+# View column names
+names(Data_Set_4)
+
+# View unique weather conditions
+Data_Set_4 |> 
+  dplyr::pull(Weather_Condition) |> 
+  unique()
+```
+
+# Re-Categorize Weather Conditions
+
+There are over 100+ different weather conditions. We condensed them into 10 broader groups.
+
+```{r}
+#install.packages("dplyr")
+library(dplyr)
+
+Data_Set_4 <- Data_Set_4 |> 
+  mutate(Weather_Category = case_when(
+    Weather_Condition %in% c("Clear", "Fair", "Fair / Windy", "Partly Cloudy", "Mostly Cloudy", "Partly Cloudy / Windy", "Mostly Cloudy / Windy") ~ "Clear / Fair",
+    Weather_Condition %in% c("Cloudy", "Overcast", "Cloudy / Windy", "Scattered Clouds") ~ "Cloudy / Overcast",
+    Weather_Condition %in% c("Fog", "Mist", "Haze", "Patches of Fog", "Shallow Fog", "Light Fog", "Light Haze", "Fog / Windy", "Drizzle and Fog") ~ "Fog / Haze / Mist",
+    Weather_Condition %in% c("Light Rain", "Rain", "Heavy Rain", "Drizzle", "Heavy Drizzle", "Light Rain Showers", "Rain Showers", "Rain Shower", "Showers in the Vicinity") ~ "Rain / Drizzle",
+    Weather_Condition %in% c("Light Snow", "Snow", "Heavy Snow", "Snow Showers", "Blowing Snow", "Sleet", "Snow and Sleet", "Snow Grains") ~ "Snow / Sleet / Ice",
+    Weather_Condition %in% c("Thunderstorm", "T-Storm", "Thunder in the Vicinity", "Thunderstorms and Rain", "Thunderstorms and Snow") ~ "Thunderstorms / Lightning",
+    Weather_Condition %in% c("Blowing Dust", "Widespread Dust", "Sand", "Dust Whirls", "Squalls") ~ "Wind / Dust / Sand",
+    Weather_Condition %in% c("Freezing Rain", "Freezing Drizzle", "Ice Pellets") ~ "Freezing Rain / Ice Pellets",
+    Weather_Condition %in% c("Funnel Cloud", "Hail", "Small Hail", "Volcanic Ash") ~ "Other / Rare",
+    TRUE ~ "Unknown"
+  ))
+
+# View updated Weather Categories
+unique(Data_Set_4$Weather_Category)
+```
+
+# Car Accident Frequency by Weather Conditions
+
+```{r}
+#install.packages("ggplot2")
+#install.packages("scales")
+library(ggplot2)
+library(scales)
+
+Data_Set_4 |> 
+  count(Weather_Category) |> 
+  ggplot(aes(x = reorder(Weather_Category, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Car Accidents by Weather Category",
+    x = "Weather Category",
+    y = "Number of Accidents"
+  ) +
+  theme_minimal()
+```
+
+# Conditions and Severity
+
+```{r}
+Data_Set_4 |> 
+  count(Weather_Category, Severity) |> 
+  ggplot(aes(x = reorder(Weather_Category, n), y = n, fill = factor(Severity))) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Accidents by Weather and Severity",
+    x = "Weather Category",
+    y = "Number of Accidents",
+    fill = "Severity Level"
+  ) +
+  theme_minimal()
+```
+
+# Re-Group Weather Categories
+
+```{r}
+Data_Set_4_grouped <- Data_Set_4 |> 
+  mutate(Weather_Group = case_when(
+    grepl("Rain|Drizzle", Weather_Condition, ignore.case = TRUE) ~ "Rain",
+    grepl("Snow|Sleet|Ice", Weather_Condition, ignore.case = TRUE) ~ "Snow/Ice",
+    grepl("Fog|Mist|Haze", Weather_Condition, ignore.case = TRUE) ~ "Fog",
+    grepl("Clear|Fair", Weather_Condition, ignore.case = TRUE) ~ "Clear",
+    grepl("Cloud|Overcast", Weather_Condition, ignore.case = TRUE) ~ "Cloudy",
+    TRUE ~ "Other"
+  ))
+```
+
+# Accident Counts by Weather Group
+
+```{r}
+Data_Set_4_grouped |> 
+  count(Weather_Group) |> 
+  ggplot(aes(x = reorder(Weather_Group, n), y = n)) +
+  geom_col(fill = "lightgreen") +
+  coord_flip() +
+  labs(
+    title = "Accident Counts by Weather Group",
+    x = "Weather Group",
+    y = "Number of Accidents"
+  ) +
+  theme_minimal()
+```
+
+# Chi-Square Test
+
+```{r}
+# Chi-Square Test
+weather_group_counts <- Data_Set_4_grouped |> 
+  count(Weather_Group)
+
+chisq_test_result <- chisq.test(weather_group_counts$n)
+chisq_test_result
+```
+
+**Interpretation:** - X² = 1,224,743 with 5 degrees of freedom. - p-value \< 2.2e-16. - We reject the null hypothesis. - Accident frequency significantly depends on weather group.
+
+# Standardized Residuals
+
+```{r}
+chisq_test_result$stdres
+```
+
+**Interpretation:** - Cloudy and Clear: way more accidents than expected. - Rain, Other, Snow/Ice, Fog: fewer accidents than expected. - Residuals \> 2 in magnitude → highly statistically significant differences.
+
+# Logistic Regression: Probability of Severe Accident
+
+```{r}
+# Create Binary Outcome
+Data_Set_4_grouped <- Data_Set_4_grouped |> 
+  mutate(Severe_Accident = ifelse(Severity >= 3, 1, 0))
+
+# Logistic Regression Model
+model <- glm(Severe_Accident ~ Weather_Group, data = Data_Set_4_grouped, family = "binomial")
+
+# Model Summary
+summary(model)
+```
+
+**Interpretation:** - All weather groups show higher odds of severe accidents compared to Clear. - Cloudy, Rain, Snow/Ice have stronger effects. - All coefficients are statistically significant (p \< 0.001).
+
+# Key Takeaways
+
+-   Weather conditions **significantly impact accident frequency**.
+-   Clear and Cloudy days have **more accidents** mainly due to exposure.
+-   Rain, Snow/Ice, and Fog have **higher per-event risk**.
+-   Logistic regression shows **Cloudy, Rain, and Snow/Ice** increase odds of severe accidents.
+-   Future work: Normalize by days of exposure to get true accident rates per weather type.
