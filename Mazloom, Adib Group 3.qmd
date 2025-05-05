@@ -4,100 +4,150 @@ subtitle: "Final Report"
 author: "Anthony Fitch, Adib Mazloom, Annabelle Petherbridge, Julia Bautista, & William Jackson"
 institute: "GBA 5910, Cal Poly Pomona"
 date: "`r Sys.Date()`"
-format: 
-  html:
+format:
+  revealjs:
+    theme: simple
+    transition: fade
     toc: true
-    toc-depth: 2
-    number-sections: true
-    code-fold: true
-    code-overflow: wrap
-    css: styles.css
-editor: visual
-execute: 
+    slide-number: true
+    smaller: true
+execute:
   echo: true
-  freeze: auto
+  warning: false
+  message: false
 ---
 
-# Improvements on Driver Education and Safety
+## Introduction
 
-```{r}
-# Load the tidyverse or readr
+In this section of the group project, we will explore two primary research questions:
+
+1. What is the most common **type** of traffic accident?
+2. What are the most common **causes** of those accidents?
+
+---
+
+```{r setup, include=FALSE}
 library(tidyverse)
+library(readr)
+library(ggplot2)
 
-# Import the CSV file
-data <- read_csv("cleaned.csv")
+# Load the dataset
+accidents <- read_csv("cleaned.csv")
 
-# Preview the data
-head(data)
-
+# View a sample of the data
+head(accidents)
 ```
 
-## What was the most common accident type?
+## Most Common Accident Types (Bar Chart)
 
-### Independent Variables & Dependent Variables
+```{r accident-type-bar, fig.width=8, fig.height=5, echo=FALSE}
+accidents %>%
+  count(Type_of_collision, sort = TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(x = reorder(Type_of_collision, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 Most Common Accident Types",
+       x = "Accident Type",
+       y = "Count") +
+  theme_minimal()
+```
 
--   Independent Variables (IV's)
+---
 
--   Type of Collision
+## Analysis: Bar Chart - Accident Types
 
--   Dependent Variables (DV's): Rate per 100,000
+- Rear-end collisions are the most common, followed by head-on and side-swipe crashes.
+- These often result from inattention, tailgating, and failure to follow traffic rules.
+- Driver’s ed can focus more on reaction time and following distance.
+- Techniques like simulated braking and interactive drills can reinforce safer habits.
+- AR scenarios can improve spatial awareness and lane control.
 
--   Rate per 100,000
+---
 
--   Severity of Accident
+## Most Common Accident Types (Pie Chart)
 
-### Data Wrangling
+```{r accident-type-pie, fig.width=6, fig.height=6, echo=FALSE}
+accidents %>%
+  count(Type_of_collision, sort = TRUE) %>%
+  top_n(5) %>%
+  ggplot(aes(x = "", y = n, fill = Type_of_collision)) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  labs(title = "Accident Type Distribution") +
+  theme_void()
+```
 
--   Organized Data from multiple cities and states across the country throughout multiple years
+---
 
--   Clean missing values and remove values with no quantitative value
+## Analysis: Pie Chart - Accident Types
 
--   Filter data sets to include accidents from cities with a minimum population and remove other values
+- A few types dominate most accidents: rear-end, head-on, and single-vehicle.
+- Emphasizing these in training helps allocate learning time efficiently.
+- Virtual driving sims could offer specific high-risk scenario training.
+- Short-form video modules with real dashcam footage can boost attention and retention.
 
-### Data Visualization
+---
 
--   Bar Charts to display frequency of specific accident types
+## Most Common Accident Causes (Bar Chart)
 
--   Boxplot to display severity of certain accident types
+```{r accident-cause-bar, fig.width=8, fig.height=5, echo=FALSE}
+accidents %>%
+  count(Cause_of_accident, sort = TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(x = reorder(Cause_of_accident, n), y = n)) +
+  geom_bar(stat = "identity", fill = "tomato") +
+  coord_flip() +
+  labs(title = "Top 10 Causes of Accidents",
+       x = "Cause",
+       y = "Count") +
+  theme_minimal()
+```
 
-### Analysis and Possible Solutions
+---
 
--   Altered drivers Ed courses to emphasize accident types and how to avoid them
+## Analysis: Bar Chart - Accident Causes
 
--   Increased training in situation surrounding accident types
+- Speeding and distracted driving are the top causes of accidents.
+- These behaviors reduce response time and lead to serious injuries.
+- Traditional lectures are not enough to address behavioral habits.
+- Distraction simulators and gamified modules could engage students better.
+- Real stories and interactive challenges create emotional impact.
 
--   Altered behind the wheel driving instruction time for further instruction
+---
 
-## Whats was the most common factor that caused the accident?
+## Most Common Accident Causes (Pie Chart)
 
--   Independent Variables (IV's)
+```{r accident-cause-pie, fig.width=6, fig.height=6, echo=FALSE}
+accidents %>%
+  count(Cause_of_accident, sort = TRUE) %>%
+  top_n(5) %>%
+  ggplot(aes(x = "", y = n, fill = Cause_of_accident)) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  labs(title = "Accident Cause Distribution") +
+  theme_void()
+```
 
--   Cause of Accident
+---
 
--   Dependent Variables (DV's): Rate per 100,000
+## Analysis: Pie Chart - Accident Causes
 
--   Rate per 100,000
+- Speeding and distractions make up the majority of accidents.
+- These are habit-based, not knowledge-based mistakes.
+- Driver contracts and self-evaluations can build accountability.
+- Apps with post-drive feedback can turn real habits into learning moments.
+- AI tools can coach new drivers with personalized safety tips.
 
--   Severity of Accident
+---
 
-### Data Wrangling
+## Summary & Recommendations
 
--   Organized Data from multiple cities and states across the country throughout multiple years
+- **Rear-end and head-on collisions** are the most common accident types.
+- **Speeding and distracted driving** are the primary causes.
+- Drivers' education should evolve to use:
+  - Interactive and immersive technologies (e.g., AR/VR)
+  - Scenario-based learning with decision trees
+  - Behavior-modifying feedback tools
 
--   Clean missing values and remove values with no quantitative value
-
--   Filter data sets to include accidents from cities with a minimum population and remove other values
-
-### Data Visualization
-
--   Bar Charts to display frequency of factors that caused the accident
-
--   Box plot to display severity of certain accident factors
-
-### Analysis and Possible Solutions
-
--   Altered drivers Ed courses to emphasize accident causes and why they are deadly
-
--   Increased education in accident severity and outcomes of poor driving habits
-
--   Altered behind the wheel driving instruction time for further instruction
+By targeting the most frequent accident types and causes, training programs can become more effective, data-driven, and life-saving.
