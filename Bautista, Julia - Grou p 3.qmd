@@ -156,7 +156,7 @@ summary(model)
 # Key Takeaways
 
 -   Weather conditions **significantly impact accident frequency**.
--   Clear and Cloudy days have **more accidents** mainly due to exposure.
+-   Clear and Cloudy days have **more accidents** mainly due to exposure. 
 -   Rain, Snow/Ice, and Fog have **higher per-event risk**.
 -   Logistic regression shows **Cloudy, Rain, and Snow/Ice** increase odds of severe accidents.
 -   Future work: Normalize by days of exposure to get true accident rates per weather type.
