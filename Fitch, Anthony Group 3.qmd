@@ -1,10 +1,36 @@
 ---
-title: "Fitch, Anthony Group 3"
-format: html
+title: "Anthony Fitch"
+subtitle: "Revealjs Presentation"
+author: "Anthony Fitch"
+institute: "Your Course Number, Cal Poly Pomona"
+date: "`r Sys.Date()`"
+format: 
+  revealjs:
+    theme: serif
+    width: 1600
+    height: 900
+    footer: Title of Your Project
+    transition: slide
+    transition-speed: default
+    incremental: false
+    toc: true
+    toc-depth: 1
+    slide-number: true
+    scrollable: true
+    smaller: true
+    code-fold: false
+    code-overflow: wrap
+    number-sections: false
+    number-depth: 5
+    embed-resources: true
+    css: styles.css
 editor: visual
+execute: 
+  echo: true
+  freeze: auto
 ---
 
-# Data Wrangling 2017 Census Data
+## Data Wrangling 2017 Census Data
 
 ```{r}
 
@@ -23,16 +49,9 @@ dim(Census_Data_1)
 
 ## Column Names
 
-\[1\] "TractId" "State" "County" "TotalPop"
-\[5\] "Men" "Women" "Hispanic" "White"
-\[9\] "Black" "Native" "Asian" "Pacific"
-\[13\] "VotingAgeCitizen" "Income" "IncomeErr" "IncomePerCap"
-\[17\] "IncomePerCapErr" "Poverty" "ChildPoverty" "Professional"
-\[21\] "Service" "Office" "Construction" "Production"
-\[25\] "Drive" "Carpool" "Transit" "Walk"
-\[29\] "OtherTransp" "WorkAtHome" "MeanCommute" "Employed"
-\[33\] "PrivateWork" "PublicWork" "SelfEmployed" "FamilyWork"
-\[37\] "Unemployment"
+\[1\] "TractId" "State" "County" "TotalPop" \[5\] "Men" "Women" "Hispanic" "White" \[9\] "Black" "Native" "Asian" "Pacific" \[13\] "VotingAgeCitizen" "Income" "IncomeErr" "IncomePerCap" \[17\] "IncomePerCapErr" "Poverty" "ChildPoverty" "Professional" \[21\] "Service" "Office" "Construction" "Production" \[25\] "Drive" "Carpool" "Transit" "Walk" \[29\] "OtherTransp" "WorkAtHome" "MeanCommute" "Employed" \[33\] "PrivateWork" "PublicWork" "SelfEmployed" "FamilyWork" \[37\] "Unemployment"
+
+## Top 20 States: Men Vs. Women Population
 
 ```{r}
 #unique(Census_Data_1$State)
@@ -76,6 +95,8 @@ ggplot(top_states_long, aes(x = reorder(State, TotalPop), y = Population, fill =
 
 ```
 
+## Wrangling US Education Data
+
 ```{r}
 US_Education <- read.csv("US_Educational_Data.csv")
 
@@ -103,10 +124,10 @@ print(US_Education)
 
 library(googledrive)
 
-url <- "https://drive.google.com/file/d/1tukQ6qwB9v4BbKg8oY_ECVBXilDcAnWP/view?usp=share_link"
-data <- read.csv(url)
+#url <- "https://drive.google.com/file/d/1tukQ6qwB9v4BbKg8oY_ECVBXilDcAnWP/view?usp=share_link"
+#data <- read.csv(url)
 
 
 ```
 
-# Data Wrangling US Car Accident Data
+## Data Wrangling US Car Accident Data
