@@ -4,23 +4,109 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+# Data Wrangling 2017 Census Data
 
 ```{r}
-1 + 1
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(tidyr)
+
+Census_Data_1 <- read.csv("2017 Census Data.csv")
+
+dim(Census_Data_1)
+
+#names(Census_Data_1)
+
 ```
 
-You can add options to executable code like this
+## Column Names
+
+\[1\] "TractId" "State" "County" "TotalPop"
+\[5\] "Men" "Women" "Hispanic" "White"
+\[9\] "Black" "Native" "Asian" "Pacific"
+\[13\] "VotingAgeCitizen" "Income" "IncomeErr" "IncomePerCap"
+\[17\] "IncomePerCapErr" "Poverty" "ChildPoverty" "Professional"
+\[21\] "Service" "Office" "Construction" "Production"
+\[25\] "Drive" "Carpool" "Transit" "Walk"
+\[29\] "OtherTransp" "WorkAtHome" "MeanCommute" "Employed"
+\[33\] "PrivateWork" "PublicWork" "SelfEmployed" "FamilyWork"
+\[37\] "Unemployment"
 
 ```{r}
-#| echo: false
-2 * 2
+#unique(Census_Data_1$State)
+
+# 1. Prepare the data
+top_states_long <- Census_Data_1 %>%
+  group_by(State) %>%
+  summarise(
+    Total_Men = sum(Men, na.rm = TRUE),
+    Total_Women = sum(Women, na.rm = TRUE)
+  ) %>%
+  mutate(TotalPop = Total_Men + Total_Women) %>%
+  arrange(desc(TotalPop)) %>%
+  slice_head(n = 20) %>%
+  pivot_longer(cols = c(Total_Men, Total_Women),
+               names_to = "Gender",
+               values_to = "Population") %>%
+  group_by(State) %>%
+  mutate(Percent = Population / sum(Population) * 100)
+
+# 2. Plot
+ggplot(top_states_long, aes(x = reorder(State, TotalPop), y = Population, fill = Gender)) +
+  geom_bar(stat = "identity") +
+  geom_text(
+    aes(label = paste0(round(Percent, 1), "%")),
+    position = position_stack(vjust = 0.5),
+    color = "white",
+    size = 3
+  ) +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  scale_fill_manual(values = c("Total_Men" = "red", "Total_Women" = "purple")) +
+  labs(
+    title = "Top 20 States by Population (Men vs Women Stacked with %)",
+    x = "State",
+    y = "Population",
+    fill = "Gender"
+  ) +
+  theme_minimal()
+
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+US_Education <- read.csv("US_Educational_Data.csv")
+
+dim(US_Education)
+
+names(US_Education)
+
+library(dplyr)
+library(tidyr)
+
+# Step 1: Create a new column called County
+US_Education <- US_Education %>%
+  mutate(County = ifelse(grepl("County", Label..Grouping.), Label..Grouping., NA)) %>%
+  fill(County)
+
+# Step 2 (optional): If you want, you can also clean the County name (remove extra stuff if needed)
+# For example, remove extra text like "County:" if it's messy
+# US_Education <- US_Education %>%
+#   mutate(County = str_remove(County, "County: "))  # optional cleaning
+
+US_Education <- US_Education %>%
+  relocate(County, .before = 1)
+
+print(US_Education)
+
+library(googledrive)
+
+url <- "https://drive.google.com/file/d/1tukQ6qwB9v4BbKg8oY_ECVBXilDcAnWP/view?usp=share_link"
+data <- read.csv(url)
+
+
+```
+
+# Data Wrangling US Car Accident Data
