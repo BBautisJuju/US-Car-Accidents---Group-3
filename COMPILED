@@ -405,7 +405,300 @@ All coefficients are statistically significant (p \< 0.001).
 **Cloudy and Rainy conditions increase the odds of severe accidents**, as shown in the logistic regression.
 
 
-# R3
+## R03 What geographical locations are more likely to have higher accident rates? Cities or states.? 
+
+## Traffic Accidents by State  
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+
+# Define the raw file URL from GitHub
+url <- "https://raw.githubusercontent.com/wlj831/Raw-Data-GBA-5910-/refs/heads/main/Cleaned%20Raw%20Data%20File.csv"
+
+# Load the data directly into R
+data <- read.csv(url)
+
+# View the first few rows of the data
+head(data)
+
+# Load data from GitHub using base R
+data_traffic <- read.csv("https://raw.githubusercontent.com/wlj831/Raw-Data-GBA-5910-/refs/heads/main/Cleaned%20Road%20Traffic%20Accidents.csv")
+
+# View first few rows
+head(data_traffic)
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(maps)      # For state map data
+library(viridis)   # Optional: for color scales, or use red-blue as specified
+
+# Clean the data
+Clean_Data_Geography <- na.omit(data)
+
+# Keep only State and County
+State_County_Only <- Clean_Data_Geography[, c("State", "County")]
+
+# Count accidents by state
+accidents_by_state <- State_County_Only %>%
+  group_by(State) %>%
+  summarize(accident_count = n())
+
+# Make state names lowercase to match map data
+accidents_by_state$region <- tolower(accidents_by_state$State)
+
+# Get map data for US states
+states_map <- map_data("state")
+
+# Filter out Alaska and Hawaii
+states_map <- states_map %>% 
+  filter(!(region %in% c("alaska", "hawaii")))
+
+# Convert state abbreviations (e.g., "CA") to full state names
+accidents_by_state$region <- tolower(state.name[match(accidents_by_state$State, state.abb)])
+
+
+# Join accident data with map data
+map_data_joined <- left_join(states_map, accidents_by_state, by = "region")
+
+# --- Plot with custom background ---
+ggplot(map_data_joined, aes(long, lat, group = group, fill = accident_count)) +
+  geom_polygon(color = "white", size = 0.2) +
+  scale_fill_gradient(low = "blue", high = "red", na.value = "gray90") +
+  labs(title = "Car Accidents by State (Lower 48)", fill = "Accidents") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = "#e6f2ff", color = NA),      # Light blue
+    panel.background = element_rect(fill = "#f7f7f7", color = NA),     # Soft gray map area
+    legend.background = element_rect(fill = "#e6f2ff", color = NA),    # Match plot bg
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+## State Level Trends 
+
+- States like California, Texas, and Florida often report the highest total accident counts due to population density and highway networks.
+
+- However, when normalized per capita or per mile driven, smaller states or dense urban states (e.g., New Jersey) may have higher rates per person or per vehicle.
+
+- For insurance companies 
+
+- Adjust premiums based on regional accident risks. 
+- Detect fraud by comparing claims vs normalized accident rates.
+- Guide market entry/exit decisions using geographic risk profiles. 
+
+- For DOT 
+
+- Prioritize safety improvements in high-risk areas. 
+- Allocate infrastructure funds based on per capita or VMT data 
+- Target public safety campagains where accidents are most frequent. 
+
+## Top 10 Cities 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(dplyr)
+library(ggplot2)
+
+# Step 1: Filter for the lower 48 states (excluding Alaska and Hawaii)
+lower_48_data <- Clean_Data_Geography %>%
+  filter(State != "AK", State != "HI")
+
+# Step 2: Count accidents by City
+accidents_by_city <- lower_48_data %>%
+  group_by(City) %>%
+  summarize(accident_count = n()) %>%
+  arrange(desc(accident_count))
+
+# Step 3: Select the top 10 cities with the most accidents
+top_10_cities <- accidents_by_city %>%
+  top_n(10, wt = accident_count)
+
+# Step 4: Plot the bar chart
+ggplot(top_10_cities, aes(x = reorder(City, -accident_count), y = accident_count, fill = accident_count)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Top 10 Cities by Accidents in the Lower 48 States", x = "City", y = "Number of Accidents") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## Top 10 Cities Results 
+
+- Major cities like Miami Los Angeles, Houston, and Charlott lead in accident volume.
+
+- Urban areas contribute a disproportionate share of total accidents.
+
+- DOT Use: 
+- Target hotspots for infrastructure and traffic safety improvements.
+- Allocate resources effectively to high-accident areas.
+- Inform policy with data on urban vs. rural crash trends.
+
+- Insurance Use: 
+- Price premiums based on regional risk.
+- Forecast claims in high-incident zones.
+- Detect fraud via geographic claim patterns.
+
+## Los Angeles and Orange County Top 20 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(dplyr)
+library(ggplot2)
+
+# Step 1: Filter for LA and Orange Counties
+la_oc_data <- Clean_Data_Geography %>%
+  filter(State == "CA", County %in% c("Los Angeles", "Orange"))
+
+# Step 2: Count accidents by City
+accidents_by_city <- la_oc_data %>%
+  group_by(City) %>%
+  summarize(accident_count = n()) %>%
+  arrange(desc(accident_count))
+
+# Step 3: Select the top 20 cities with the most accidents
+top_20_cities <- accidents_by_city %>%
+  top_n(20, wt = accident_count)
+
+# Step 4: Plot the bar chart
+ggplot(top_20_cities, aes(x = reorder(City, -accident_count), y = accident_count, fill = accident_count)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Top 20 Cities by Accidents in LA & Orange Counties", x = "City", y = "Number of Accidents") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+## Future Developments for More Accurate Analysis 
+
+- Normalize by Population: Merge with census data to calculate per capita crash rates.
+
+- Adjust for Traffic Volume: Use VMT to reveal true risk exposure by area.
+
+- Group Cities by Size: Bin by crash volume to classify cities as small/medium/large.
+
+- Analyze Time Trends: Break down by time of day, week, or season to find patterns.
+
+- Map Spatial Hotspots: Use geospatial tools to visualize high-crash areas.
+
+- Spot Outliers: Flag cities with abnormal crash rates for further study.
+
+
+## RO3 (Continued) Which locations (roads, intersections, regions) have the highest accident rates?
+
+## The Variables to Review for Locations and the Associated Severity of the Accident 
+
+- No Junction: A straight, uninterrupted road with no intersections or merges.
+
+- Y Shape: A three-way intersection where one road splits or merges at an angle.
+
+- Crossing: A general intersection where roads meet, may involve pedestrians.
+
+- O Shape: A roundabout or traffic circle where vehicles yield to ongoing traffic.
+
+- Other: Any non-standard or complex junction not fitting the above types.
+
+- Unknown: Intersection type is unclear due to missing or incomplete data.
+
+- T Shape: A three-way intersection where one road ends perpendicularly, requiring a left or right turn.
+
+- X Shape: A four-way intersection where two roads cross at a right angle.
+
+- Severity: 
+- Severity 0 is minimal risk (no injuries)
+- Severity 1 represents moderate risk (minor injuries)
+- Severity 2 indicates high risk (severe injuries or fatalities)
+
+## What Locations Have the Most Accidents? 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+# View all column names in the dataset
+colnames(data_traffic)
+
+# View all unique values in 'Types_of_Junction'
+unique(data_traffic$Types_of_Junction)
+
+# Load the necessary libraries
+library(dplyr)
+
+# Count the frequency of each 'Types_of_Junction'
+junction_counts <- data_traffic %>%
+  group_by(Types_of_Junction) %>%
+  summarise(Count = n())
+
+# View the counted data_traffic
+print(junction_counts)
+
+# Load ggplot2 for plotting
+library(ggplot2)
+
+# Create a bar plot of junction counts
+ggplot(junction_counts, aes(x = Types_of_Junction, y = Count)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Accidents by Type of Junction", 
+       x = "Type of Junction", 
+       y = "Number of Accidents") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## The Type of Intersection and the Severity of the Accident 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(ggplot2)
+library(dplyr)
+
+# Summarize the data
+bubble_data <- data_traffic %>%
+  group_by(Types_of_Junction, Accident_severity) %>%
+  summarise(Count = n(), .groups = "drop")
+
+# Custom red-blue gradient (from blue -> white -> red)
+custom_colors <- c("#08306B", "#2171B5", "#6BAED6", "#F7F7F7", "#FC9272", "#CB181D", "#67000D")
+
+# Plot with enhanced color and size
+ggplot(bubble_data, aes(x = Types_of_Junction, y = factor(Accident_severity), size = Count, fill = Count)) +
+  geom_point(shape = 21, color = "black", alpha = 0.8) +
+  scale_size(range = c(4, 16)) +
+  scale_fill_gradientn(colors = custom_colors) +
+  labs(
+    title = "Bubble Heatmap: Accident Severity by Junction Type",
+    x = "Type of Junction",
+    y = "Accident Severity",
+    size = "Number of Accidents",
+    fill = "Number of Accidents"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right",
+    plot.title = element_text(face = "bold", size = 16)
+  )
+
+```
+
+## Takeaways from Type of Intersection and Severity of Accident 
+
+- Y Shape and No Junction roads have the highest number of severe (Level 2) accidents.
+- Crossings also show notable severity but less frequently.
+- O, T, and X Shapes have low severity, suggesting safer design.
+- Y Shape junctions may need redesign due to high risk.
+- No Junction severity may reflect high-speed or rural roads.
+- For DOT:
+- Identify high-risk junction types (e.g., Y Shape) for redesign or added traffic control.
+- Prioritize safety improvements on uninterrupted roads with severe accidents.
+- Allocate resources more effectively for road safety interventions.
+- Support data-driven policy for intersection design standards and upgrades.
+- For Car Insurance:
+- Refine risk models based on accident severity by junction type.
+- Adjust premiums for drivers based on frequent routes or commute patterns.
+- Inform customer education on high-risk road types and safe driving behavior.
+
+Enhance fraud detection by comparing claims with typical severity at given junctions.
 
 
 
