@@ -99,6 +99,1057 @@ Risk Reduction
 
 # R1
 
+# Research Objective #1
+
+What counties have the most accidents per-capita and overall. Compare these counties across multiple characteristics, age, income, etc. using US census Data.
+
+## Dependent Variable
+
+-   Accidents Per Capita
+
+-   I am analyzing this against various Independent Variables \## Dependent Variables
+
+-   Commuting Behavior
+
+    -   Walk
+    -   Drive
+    -   Carpool
+    -   Transit
+    -   Work at Home
+    -   Mean Commute
+
+-   Employment Type
+
+    -   Professional
+    -   Service
+    -   Office
+
+## Operationalization of the Scale
+
+-   **Dependent Variables**
+-   Accidents Per Capita
+    -   Operationalization
+        -   Total Accidents per county/ Total Population of County
+    -   Scale Type
+        -   Ratio
+-   **Independent Variables**
+
+| Variable     | Operationalization                | Scale Type |
+|--------------|-----------------------------------|------------|
+| Walk         | \% of workers who walk to work    | Ratio      |
+| Drive        | \% who drive alone                | Ratio      |
+| Carpool      | \% who carpool                    | Ratio      |
+| Transit      | \% who use public transit         | Ratio      |
+| WorkAtHome   | \% who work remotely              | Ratio      |
+| MeanCommute  | Average commute time in minutes   | Ratio      |
+| Professional | %employed in professional roles   | Ratio      |
+| Service      | \% employed in service jobs       | Ratio      |
+| Office       | \% employed in office/admin roles | Ratio      |
+|              |                                   |            |
+
+## Data Wrangling
+
+-   Refer to: Refernce data, of bigger data sets
+    -   US Traffic Accident
+        -   Data had 7 million rows so I wrangled the data and only kept sums and tables I needed
+    -   US Census Data
+        -   Originally had 100,000 rows and wrangled it down to 14,000 rows which is all i needed based on the counties i found in the US traffic Accident data
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(scales)
+library(patchwork)
+library(tidytext)
+
+#Read the big dataset with 7 million rows
+#US_Accident_Data <- read_csv("US_Accidents.csv")
+
+#Read Census data
+#US_Census_Data <- read_csv("2017 Census Data.csv")
+
+
+
+# Summarize and arrange
+#top_counties <- US_Accident_Data %>%
+ # count(County, sort = TRUE) %>%
+  #top_n(20, n)
+
+# Plot
+#ggplot(top_counties, aes(x = reorder(County, n), y = n)) +
+  #geom_bar(stat = "identity") +
+  #coord_flip() +
+  #labs(title = "Top 20 Counties by Accident Count", x = "County", y = "Count")
+
+#top_counties_df <- top_counties %>%
+  #rename(Accident_Count = n)
+
+#print(top_counties_df)
+
+#write.csv(top_counties_df, "top_20_counties.csv", row.names = FALSE)
+
+Top_20_Counties <- read_csv("top_20_counties.csv")
+
+print(Top_20_Counties)
+
+
+```
+
+## Data Wrangling: Plot of top 20 counties with the most accidents
+
+```{r}
+ggplot(Top_20_Counties, aes(x = reorder(County, Accident_Count), y = Accident_Count)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = Accident_Count), hjust = -0.1, size = 3) +
+  coord_flip() +
+  labs(
+    title = "Top 20 Counties by Accident Count",
+    x = "County",
+    y = "Accident Count"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))  # Center title
+```
+
+## Data Wrangling: US Census
+
+-   Check for Missing or Incosistent data
+    -   None found
+-   Standardize columns with ratios as percentages
+-   Data was already Tidy
+-   Data was already long
+
+```{r}
+US_Census_Counties <- read_csv("US_Census_Counties.csv")
+
+#Check for missing or inconsistent data
+summary(US_Census_Counties)
+colSums(is.na(US_Census_Counties))
+
+#US_Census_Counties <- US_Census_Counties %>%
+  #mutate(across(c(Walk, Drive, Carpool, Transit, WorkAtHome), ~ ./100))
+
+County_Pop_Summary <- US_Census_Counties %>%
+  group_by(County) %>%
+  summarise(Total_Population = sum(TotalPop, na.rm = TRUE)) %>%
+  arrange(desc(Total_Population))
+
+
+```
+
+## Data Wrangling: Finding top County Populations
+
+```{r}
+ggplot(County_Pop_Summary, aes(x = reorder(County, Total_Population), y = Total_Population)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +  # Use commas, not scientific notation
+  labs(
+    title = "Total Population by County",
+    x = "County",
+    y = "Total Population"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+## Data Wrangling: Merging Datasets Total Accidents and Total Population
+
+```{r}
+Top_20_Counties_with_Pop <- Top_20_Counties %>%
+  left_join(County_Pop_Summary %>% select(County, Total_Population), by = "County")
+
+Top_20_Counties_with_Pop <- Top_20_Counties_with_Pop %>%
+  mutate(Accidents_Per_Capita = Accident_Count / Total_Population)
+
+print(Top_20_Counties_with_Pop)
+
+
+
+```
+
+## Variable: Graph Showing Total Accident Counts per County
+
+```{r}
+
+top_15_count <- Top_20_Counties_with_Pop %>%
+  arrange(desc(Accident_Count)) %>%
+  slice_head(n = 15) %>%
+  mutate(County = factor(County, levels = rev(County)))  # fix order
+
+plot1 <- ggplot(top_15_count, aes(x = County, y = Accident_Count, fill = County)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 15 Counties by Total Accident Count",
+    x = "County",
+    y = "Accident Count"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+print(plot1)
+```
+
+## Variable: Showing Per Capita which of the Top Counties are the worst
+
+```{r}
+top_15_per_capita <- Top_20_Counties_with_Pop %>%
+  arrange(desc(Accidents_Per_Capita)) %>%
+  slice_head(n = 15) %>%
+  mutate(County = factor(County, levels = rev(County)))  # fix order
+
+plot2 <- ggplot(top_15_per_capita, aes(x = County, y = Accidents_Per_Capita, fill = County)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 15 Counties by Accidents Per Capita",
+    x = "County",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+print(plot2)
+```
+
+## Data Visualization: Graph of Per Capita and % of Walkers
+
+```{r}
+# Step 1: Define counties of interest
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Walk data
+walk_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Walk, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Walk (%)")
+
+# Step 3: Accident data (this determines the order)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Set county order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both and apply consistent order
+combined_df <- bind_rows(walk_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reverse for coord_flip()
+
+# Step 6: Plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Walk Percentage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visuzliation: Graph of Per Capita and % Work From Home
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Work-from-home data
+wfh_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(WorkAtHome, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Work-from-Home (%)")
+
+# Step 3: Accident per capita data (for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Define County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine datasets and apply consistent factor order
+combined_df <- bind_rows(wfh_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reverse for coord_flip
+
+# Step 6: Create side-by-side plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Work-from-Home Percentage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph with Per capita and Carpool
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Carpool data
+carpool_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Carpool, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Carpool (%)")
+
+# Step 3: Accident per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Define County order by descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets and enforce consistent County order
+combined_df <- bind_rows(carpool_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Carpool Percentage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visuzliation: Graph with per Capita and % of Professional Jobs
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Professional employment data
+professional_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Professional, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Professional Employment (%)")
+
+# Step 3: Accident per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Set County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets with shared County factor levels
+combined_df <- bind_rows(professional_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create the side-by-side faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Professional Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph of Per Capita and Service Jobs
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Service employment data
+service_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Service, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Service Employment (%)")
+
+# Step 3: Accidents per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Set County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets and apply the same county order
+combined_df <- bind_rows(service_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create the side-by-side faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Service Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph of Per Capita and % Office Employment
+
+```{r}
+#Office
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+office_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Office, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Office Employment (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(office_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Office Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and % Who Drive alone
+
+```{r}
+#Drive
+
+drive_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Drive, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Drive Alone (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(drive_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Drive Alone",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and % Commuting with Public Transit
+
+```{r}
+#Transit
+
+transit_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Transit, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Public Transit (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(transit_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Public Transit Usage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and Mean Commute in Minutes
+
+```{r}
+#MeanCommute
+
+commute_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(MeanCommute, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Commute Time (min)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(commute_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Commute Time",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Mean Commute
+
+```{r}
+# Step 1: Join commute and accident data directly for scatter plot
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Commute Time
+commute_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MeanCommute = mean(MeanCommute, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(commute_df, accident_df, by = "County")
+
+# Step 2: Scatter plot with regression line
+ggplot(joined_df, aes(x = MeanCommute, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Mean Commute Time vs. Accidents per Capita",
+    x = "Average Commute Time (min)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Transit
+
+```{r}
+# Scatter Plot: Public Transit (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Public Transit (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Transit, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Public Transit (%) vs. Accidents per Capita",
+    x = "Public Transit (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Drive
+
+```{r}
+# Scatter Plot: Drive Alone (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Drive Alone (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Drive, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Drive Alone (%) vs. Accidents per Capita",
+    x = "Drive Alone (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Office
+
+```{r}
+# Scatter Plot: Office Employment (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Office Employment (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Office, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Office Employment (%) vs. Accidents per Capita",
+    x = "Office Employment (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Service
+
+```{r}
+# Scatter Plot: Service Employment (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Service Employment (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Service, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Service Employment (%) vs. Accidents per Capita",
+    x = "Service Employment (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Professional
+
+```{r}
+# Scatter Plot: Professional Employment (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Professional Employment (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Professional, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Professional Employment (%) vs. Accidents per Capita",
+    x = "Professional Employment (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+
+```
+
+## Scatter Plot Per Capita and Carpool
+
+```{r}
+# Scatter Plot: Carpool (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Carpool (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Carpool, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Carpool (%) vs. Accidents per Capita",
+    x = "Carpool (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and WorkAtHome
+
+```{r}
+# Scatter Plot: Work From Home (%) vs. Accidents per Capita
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Work From Home (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(WorkAtHome, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Work From Home (%) vs. Accidents per Capita",
+    x = "Work From Home (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Scatter Plot Per Capita and Walk
+
+```{r}
+# Scatter Plot: Walk (%) vs. Accidents per Capita
+
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Metric: Walk (%)
+metric_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(MetricValue = mean(Walk, na.rm = TRUE))
+
+# Accidents per Capita
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  select(County, Accidents_Per_Capita)
+
+# Combine
+joined_df <- left_join(metric_df, accident_df, by = "County")
+
+# Scatter Plot with Best Fit Line
+ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)) +
+  geom_point(color = "steelblue", size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
+  geom_text(nudge_y = 0.001, size = 3, check_overlap = TRUE) +
+  labs(
+    title = "Relationship: Walk (%) vs. Accidents per Capita",
+    x = "Walk (%)",
+    y = "Accidents per Capita"
+  ) +
+  theme_minimal()
+```
+
+## Table Summary of Research Objective #1
+
+-   In conclusion
+
+| Variable | Summary | Accidents Per Capita | Independent Variable |
+|------------------|------------------|------------------|------------------|
+| Top 20 Counties by Accident Count | Los Angeles, Miami-Dade, Orange, Harris, Dallas, etc. |  |  |
+| Total Population by County | Nothing of Importance |  |  |
+| Top 15 Counties by Accident Count | Had missing data so reduced to top 15 |  |  |
+| Top 15 Counties Accidents per Capita | This data was a better representation of how a county is doing |  |  |
+| Per Capita and Mean Commute | The worst counties of accidents per capita have the lower average commute | High Rate | Lower Commute |
+| Per Capita and Transit | Counties with a higher percentage of public transit have less accidents per capita | Low Rate | High Public Transit |
+| Per Capita and One Driver | Accidents per Capita go up as the % of people who drive alone go up | High Rate | High amount of people driving alone |
+| Per Capita and people who work in an office | No Findings | No Slope | No Slope |
+| Per Capita and Service Workers | A steep decline showing a higher percentage of Service employment relates to a lower Accident rate | Low Rate | High amount of Service Workers |
+| Per Capita and Professional Employment | A rise in Professional employment shows a rise in Accidents per capita | High Rate | High Professional Employment |
+| Per Capita and those who Carpool | An increase in people who carpool shows a decrease in Accidents per Capita | Low Rate | High Carpool Rates |
+| Per Capita and those who work from home | An increase in people working from home shows an increase in Accidents per Capita | High Rate | High amount of people working from home |
+| Per Capita and those who walk to work | More people who walk to work shows a decrease in Accidents per Capita | Low Rate | High amount of people walking to work |
+
+## Summary of Research Objective #1
+
+-   Accidents per Capita go UP when:
+
+    -   Lower Commute times (due to density)
+
+    -   More people are driving alone
+
+    -   More Professional Employment
+
+    -   More People working from home
+
+-   Accidents per Capita go DOWN when:
+
+    -   Higher amount of Public Transit
+
+    -   More Service Workers
+
+    -   More people carpooling
+
+    -   More people walking to work
+
+## Reference Only
+
+-   Refernce data, of bigger data sets
+    -   US Traffic Accident
+        -   Data had 7 million rows so I wrangled the data and only kept sums and tables I needed -US Census Data
+        -   Originally had 100,000 rows and wrangled it down to 14,000 rows which is all i needed based on the counties i found in the US traffic Accident data
+
+```{r}
+#Read Census data
+#US_Census_Data <- read_csv("2017 Census Data.csv")
+
+#head(US_Census_Data)
+
+# Remove the word "County" and trim any extra whitespace
+#US_Census_Data$County <- gsub("County", "", US_Census_Data$County)
+#US_Census_Data$County <- trimws(US_Census_Data$County)
+
+# Clean list of counties (de-duplicated and trimmed)
+#target_counties <- c(
+  #"Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas",
+  #"Mecklenburg", "Montgomery", "Wake", "San Bernardino", "Travis",
+  #"Maricopa", "San Diego", "Alameda", "Davidson", "Sacramento",
+ # "Riverside", "East Baton Rouge", "Santa Clara", "Cook", "Marion",
+  #"Fulton", "Jefferson", "Washington", "Jackson", "Pima", "Greenville",
+ # "El Paso"
+#)
+
+# Create a new dataset with only those counties
+#filtered_census_data <- US_Census_Data %>%
+ # filter(County %in% target_counties)
+
+#print(filtered_census_data)
+
+#write.csv(filtered_census_data, "US_Census_Counties.csv", row.names = FALSE)
+```
+
+```{r}
+# Ensure Severity is treated as a factor
+#US_Accident_Data$Severity <- as.factor(US_Accident_Data$Severity)
+
+# Function to get top 10 counties for a given severity level
+#get_top_counties_by_severity <- function(severity_level) {
+ # US_Accident_Data %>%
+    #filter(Severity == severity_level) %>%
+    #count(County, sort = TRUE) %>%
+    #top_n(10, n) %>%
+   # arrange(desc(n)) %>%
+   # rename(Accident_Count = n)
+#}
+
+# Create datasets
+#top_counties_sev1 <- get_top_counties_by_severity("1")
+#top_counties_sev2 <- get_top_counties_by_severity("2")
+#top_counties_sev3 <- get_top_counties_by_severity("3")
+#top_counties_sev4 <- get_top_counties_by_severity("4")
+
+# Export to CSV files
+#write.csv(top_counties_sev1, "top_counties_severity1.csv", row.names = FALSE)
+#write.csv(top_counties_sev2, "top_counties_severity2.csv", row.names = FALSE)
+#write.csv(top_counties_sev3, "top_counties_severity3.csv", row.names = FALSE)
+#write.csv(top_counties_sev4, "top_counties_severity4.csv", row.names = FALSE)
+```
 
 
 # R2
