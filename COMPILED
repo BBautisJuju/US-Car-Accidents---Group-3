@@ -17,7 +17,7 @@ format:
     slide-number: true
     scrollable: true
     smaller: true
-    code-fold: false
+    code-fold: true
     code-overflow: wrap
     number-sections: false
     number-depth: 5
