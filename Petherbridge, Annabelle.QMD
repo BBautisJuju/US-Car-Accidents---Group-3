@@ -1,0 +1,281 @@
+---
+title: "US Car Accidents"
+subtitle: "Revealjs Presentation"
+author: "Group 3: Anthony Fitch, Adib Mazloom, Annabelle Petherbridge, Julia Bautista, & William Jackson"
+institute: "GBA 5910, Cal Poly Pomona"
+date: "May 1, 2025"
+format: 
+  revealjs:
+    theme: solarized
+    width: 1600
+    height: 900
+    transition: slide
+    transition-speed: default
+    incremental: false
+    toc: true
+    toc-depth: 1
+    slide-number: true
+    scrollable: true
+    smaller: true
+    code-fold: true
+    code-overflow: wrap
+    number-sections: false
+    number-depth: 5
+    embed-resources: true
+    css: styles.css
+editor: visual
+execute: 
+  echo: true
+  freeze: auto
+---
+
+# Research Objective #4
+
+This study aims to analyze the temporal distribution of car accidents, focusing on the frequency of incidents by day of the week and time of day.
+
+**Dependent Variable:**
+
+-   **Accident Frequency**: The number of accidents occurring within specific time intervals (e.g., hourly or daily).
+
+**Independent Variables:**
+
+-   **Time of Day**: Categorized into periods such as morning (6–9 AM), afternoon (12–3 PM), evening (4–7 PM), and night (8 PM–5 AM).
+
+-   **Day of Week**: Days categorized from Monday to Sunday.
+
+**Operationalization of Scale:**
+
+| **Variable** | **Operationalization**                        | **Scale Type** |
+|-----------------|---------------------------------------|-----------------|
+| **Day**      | Day of the week (e.g., Monday, Tuesday, etc.) | Ordinal        |
+| **Hour**     | Hour of the day (24-hour format)              | Ratio          |
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(plotly)
+library(lubridate)
+
+# Define the raw file URL from GitHub
+url <- "https://raw.githubusercontent.com/BBautisJuju/US-Car-Accidents---Group-3/refs/heads/main/RTA%20Dataset.csv"
+
+# Load the data directly into R
+data <- read.csv(url)
+
+# Create hour column
+data <- data %>%
+mutate(Hour = as.numeric(format(strptime(Time, "%H:%M:%S"), "%H")))
+
+```
+
+# Accidents by Day of Week
+
+```{r, echo=FALSE}
+#| label: accidents-by-day
+#| echo: true
+#| message: false
+#| warning: false
+
+accidents_by_day <- data %>%
+  count(Day_of_week) %>%
+  arrange(n) %>%
+  mutate(Day_of_week = factor(Day_of_week, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
+
+ggplot(accidents_by_day, aes(x = Day_of_week, y = n, fill = Day_of_week)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.3) +
+  labs(x = "Day of the Week", y = "Number of Accidents", title = "Accidents by Day of the Week") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Analysis:**
+
+-   Counted the number of accidents for each day of the week
+
+-   Visualized the distribution using a bar chart
+
+**Findings:**
+
+-   Accident count is highest on weekdays.
+
+-   The greatest number of accidents occur on Fridays.
+
+-   The fewest number of accidents occur on Saturday and Sunday.
+
+# Accidents by Hour
+
+```{r, echo=FALSE}
+#| label: accidents-by-time
+#| echo: true
+#| message: false
+#| warning: false
+
+# Count accidents by hour
+accidents_by_hour <- data %>%
+  count(Hour) %>%
+  arrange(Hour)
+
+# Plot
+ggplot(accidents_by_hour, aes(x = Hour, y = n)) +
+  geom_line(group = 1, color = "darkred") +
+  geom_point(color = "darkred") +
+  geom_text(aes(label = n), vjust = -0.3, size = 3.5) +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Time of Day") +
+  theme_minimal()
+```
+
+**Analysis:**
+
+-   Counted the number of accidents for each hour of the day
+
+-   Visualized the distribution using a line chart
+
+**Findings:**
+
+-   Accident frequency is highest at 8am and 5pm.
+
+-   **Morning Rush (8:00 AM)**: This peak coincides with the morning commute, where individuals are traveling to work or school. The roads are more congested, leading to increased chances of accidents
+
+-   **Evening Rush (5:00 PM):** The evening peak aligns with the end of the workday, leading to another surge in traffic as people head home.
+
+# Accident Frequency: Weekday vs Weekend
+
+```{r, echo=FALSE}
+#| label: weekday-vs-weekend-overall
+#| echo: true
+#| message: false
+#| warning: false
+
+# Create 'Weekend' variable
+data <- data %>%
+  mutate(Weekend = ifelse(Day_of_week %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
+
+# Count accidents by 'Weekend' and 'Hour'
+accidents_by_type_time <- data %>%
+  count(Weekend, Hour) %>%
+  arrange(Weekend, Hour)
+
+# Calculate overall accidents by 'Hour'
+accidents_overall <- data %>%
+  count(Hour) %>%
+  mutate(Weekend = "Overall") %>%
+  arrange(Hour)
+
+# Combine
+combined_data <- bind_rows(accidents_by_type_time, accidents_overall)
+
+# Plot
+ggplot(combined_data, aes(x = Hour, y = n, color = Weekend)) +
+  geom_line() +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Time of Day: Weekday, Weekend, and Overall") +
+  scale_color_manual(values = c("Weekday" = "blue", "Weekend" = "red", "Overall" = "black")) +
+  theme_minimal()
+```
+
+**Analysis:**
+
+-   Categorized days into Weekday (Monday–Friday) and Weekend (Saturday–Sunday)
+
+-   Counted accidents by `Weekend` and `Hour`
+
+-   Visualized the distribution using a line chart
+
+# Accident Frequency Findings: Weekday vs Weekend
+
+**Findings:**
+
+-   Majority of accidents occur on weekdays. Likely driven by number of drivers on the road heading to and from work.
+
+-   Distribution of accident frequency by hour shows significant variance between weekdays and weekend
+
+-   In order to ensure adequate emergency services, we should have more first responders on duty during weekdays from 6-10am and 3-7pm.
+
+-   Weekends should be staffed differently to account for lower number of accidents and different frequency by hour.
+
+# Accident Frequency: Weekend
+
+```{r}
+#| label: weekend-accidents-by-hour
+#| echo: true
+#| message: false
+#| warning: false
+
+# Filter data for weekends only
+weekend_data <- data %>%
+  filter(Day_of_week %in% c("Saturday", "Sunday"))
+
+# Count accidents by Hour
+accidents_by_hour <- weekend_data %>%
+  count(Hour) %>%
+  arrange(Hour)
+
+# Plot
+ggplot(accidents_by_hour, aes(x = Hour, y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue", width = 0.8) +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Hour: Weekend Only") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Analysis:**
+
+-   Accident data filtered to include only weekend days (Saturday and Sunday)
+
+-   Count of accidents per hour of the day
+
+-   Line chart depicting the number of accidents across each hour for weekend days.
+
+**Findings:**
+
+-   Accident frequency peaks at 1pm and 5pm.
+
+-   **Afternoon (1:00 PM)**: This time sees an increase in accidents as people engage in recreational activities, errands, or social gatherings.
+
+    **Evening (5:00 PM)**: Similar to weekdays, the evening peak occurs as people return home from various activities.
+
+# Summary of Research and Findings: Day of the Week Analysis
+
+-   Weekdays (Monday–Friday):
+
+```         
+-   Accident Frequency: Higher accident counts are observed on weekdays.
+
+-   Peak Days: Fridays report the highest number of accidents.
+```
+
+-   Weekends (Saturday–Sunday):
+
+```         
+-   Accident Frequency: Lower accident counts compared to weekdays.
+
+-   Peak Days: Saturdays and Sundays have fewer accidents overall.
+```
+
+# Summary of Research and Findings: Time of Day Analysis
+
+-   Weekdays:
+
+```         
+-   Morning Peak (8:00 AM): Increased accidents due to morning commutes.
+
+    Evening Peak (5:00 PM): Higher accident frequency as individuals return home from work.
+```
+
+-   Weekends:
+
+```         
+-   Afternoon Peak (1:00 PM): Rise in accidents as people engage in recreational activities.
+
+-   Evening Peak (5:00 PM): Similar to weekdays, accidents increase as individuals return from daytime activities.
+```
+
+# Summary of Research and Findings: Final Insights and Observations
+
+-   Weekday Accidents: The higher frequency of accidents on weekdays, particularly on Fridays, may be attributed to increased traffic volume during work commutes.
+
+-   Weekend Accidents: The afternoon peak on weekends suggests that recreational and social activities contribute to higher accident frequencies during these times.
+
+-   Evening Patterns: The consistent evening peak across both weekdays and weekends indicates that returning home from various activities is a common factor influencing accident frequency.
