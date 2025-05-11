@@ -313,35 +313,35 @@ print(plot2)
 ## Data Visualization: Graph of Per Capita and % of Walkers
 
 ```{r}
-# Step 1: Define counties of interest
+
 selected_counties <- c(
   "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
   "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
   "San Diego", "Alameda", "Davidson", "Sacramento"
 )
 
-# Step 2: Walk data
+
 walk_df <- US_Census_Counties %>%
   filter(County %in% selected_counties) %>%
   group_by(County) %>%
   summarise(Value = mean(Walk, na.rm = TRUE)) %>%
   mutate(Metric = "Average Walk (%)")
 
-# Step 3: Accident data (this determines the order)
+# Accident data (this determines the order)
 accident_df <- Top_20_Counties_with_Pop %>%
   filter(County %in% selected_counties) %>%
   transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
 
-# Step 4: Set county order based on descending Accidents per Capita
+# Set county order based on descending Accidents per Capita
 county_order <- accident_df %>%
   arrange(desc(Value)) %>%
   pull(County)
 
-# Step 5: Combine both and apply consistent order
+#  Combine both and apply consistent order
 combined_df <- bind_rows(walk_df, accident_df) %>%
   mutate(County = factor(County, levels = rev(county_order)))  # reverse for coord_flip()
 
-# Step 6: Plot
+# Plot
 ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
@@ -363,7 +363,7 @@ ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
 ## Scatter Plot Per Capita and Mean Commute
 
 ```{r}
-# Step 1: Join commute and accident data directly for scatter plot
+# Join commute and accident data directly for scatter plot
 selected_counties <- c(
   "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
   "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
@@ -384,7 +384,7 @@ accident_df <- Top_20_Counties_with_Pop %>%
 # Combine
 joined_df <- left_join(commute_df, accident_df, by = "County")
 
-# Step 2: Scatter plot with regression line
+# Scatter plot with regression line
 ggplot(joined_df, aes(x = MeanCommute, y = Accidents_Per_Capita, label = County)) +
   geom_point(color = "steelblue", size = 3) +
   geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
