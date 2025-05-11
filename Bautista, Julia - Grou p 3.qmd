@@ -1,18 +1,42 @@
 ---
-title: "Julia - US Car Accidents Analysis"
-format: revealjs
+title: "US Car Accidents"
+subtitle: "Revealjs Presentation"
+author: "Group 3: Anthony Fitch, Adib Mazloom, Annabelle Petherbridge, Julia Bautista, & William Jackson"
+institute: "GBA 5910, Cal Poly Pomona"
+date: "May 1, 2025"
+format: 
+  revealjs:
+    theme: solarized
+    width: 1600
+    height: 900
+    transition: slide
+    transition-speed: default
+    incremental: false
+    toc: true
+    toc-depth: 1
+    slide-number: true
+    scrollable: true
+    smaller: true
+    code-fold: false
+    code-overflow: wrap
+    number-sections: false
+    number-depth: 5
+    embed-resources: true
+    css: styles.css
 editor: visual
+execute: 
+  echo: true
+  freeze: auto
 ---
 
-# Import Data and Clean
+# **RO2: HOW DOES WEATHER CONDITIONS INFLUENCE** **ACCIDENT FREQUENCY AND SEVERITY?**
 
-```{r}
+```{r, include=FALSE}
 #install.packages("readr")
 library(readr)
-Data_Set_4 <- read_csv("Data_Set_4.csv")
+Data_Set_4 <- read_csv("Data_Set_4_sample.csv")
 
-# View column names
-names(Data_Set_4)
+
 
 # View unique weather conditions
 Data_Set_4 |> 
@@ -20,11 +44,11 @@ Data_Set_4 |>
   unique()
 ```
 
-# Re-Categorize Weather Conditions
+## Re-Categorize Weather Conditions
 
-There are over 100+ different weather conditions. We condensed them into 10 broader groups.
+There are over 100+ different weather conditions. We condensed them into 10 groups.
 
-```{r}
+```{r, echo=FALSE}
 #install.packages("dplyr")
 library(dplyr)
 
@@ -46,47 +70,92 @@ Data_Set_4 <- Data_Set_4 |>
 unique(Data_Set_4$Weather_Category)
 ```
 
-# Car Accident Frequency by Weather Conditions
-
-```{r}
+```{r car-accidents-chart, include=FALSE}
+#NOT INCLUDED, As 10 groups were too broad
 #install.packages("ggplot2")
 #install.packages("scales")
+#install.packages("dplyr")
 library(ggplot2)
 library(scales)
+library(dplyr)
 
-Data_Set_4 |> 
-  count(Weather_Category) |> 
-  ggplot(aes(x = reorder(Weather_Category, n), y = n)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+Data_Set_4 |>
+  count(Weather_Category) |>
+  ggplot(aes(x = reorder(Weather_Category, n), y = n, fill = Weather_Category)) +
+  geom_bar(stat = "identity") +
   coord_flip() +
   scale_y_continuous(labels = comma) +
+  scale_fill_manual(
+    values = c(
+      "Clear / Fair" = "#FFD700",   # yellow
+      "Cloudy" = "#FFA500",         # orange
+      "Rain" = "#FF0000",           # red
+      "Snow" = "#0000FF",           # blue
+      "Fog / Haze / Other" = "#008000" # green
+    )
+  ) +
   labs(
     title = "Car Accidents by Weather Category",
     x = "Weather Category",
-    y = "Number of Accidents"
+    y = "Number of Accidents",
+    fill = "Weather"
   ) +
   theme_minimal()
 ```
 
-# Conditions and Severity
+## Conditions and Severity
 
-```{r}
-Data_Set_4 |> 
-  count(Weather_Category, Severity) |> 
-  ggplot(aes(x = reorder(Weather_Category, n), y = n, fill = factor(Severity))) +
+```{r car-accident-severity-chart, echo=FALSE}
+library(ggplot2)
+library(scales)
+library(dplyr)
+
+# Calculate percentages and prepare labels
+plot_data <- Data_Set_4 |>
+  count(Weather_Category, Severity) |>
+  group_by(Weather_Category) |>
+  mutate(
+    pct = n / sum(n),
+    label = ifelse(pct >= 0.10, percent(pct, accuracy = 1), "")  # Only show if ≥5%
+  ) |>
+  ungroup()
+
+# Plot with improved label styling
+ggplot(plot_data, aes(x = reorder(Weather_Category, n), y = n, fill = factor(Severity))) +
   geom_bar(stat = "identity") +
+  geom_text(
+    aes(label = label),
+    position = position_stack(vjust = 0.5),
+    size = 4,                # Slightly bigger text
+    fontface = "bold",       # Make it bold
+    color = "white"          # White text for contrast
+  ) +
   coord_flip() +
   scale_y_continuous(labels = comma) +
+  scale_fill_manual(
+    values = c(
+      "1" = "#FFD700",   # yellow
+      "2" = "#FFA500",   # orange
+      "3" = "#FF0000",   # red
+      "4" = "#0000FF",   # blue
+      "5" = "#008000"    # green (if applicable)
+    )
+  ) +
   labs(
     title = "Accidents by Weather and Severity",
     x = "Weather Category",
     y = "Number of Accidents",
     fill = "Severity Level"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14)
+
 ```
 
-# Re-Group Weather Categories
+-   **Most accidents under all weather conditions are classified as Severity Level 2 (orange)**, indicating moderate severity is the most common outcome regardless of weather type.
+
+-   **Severe accidents (Levels 3 and 4) occur more frequently during Clear / Fair conditions** than in adverse weather, likely due to higher traffic volumes or driver overconfidence.
+
+## Re-Group Weather Categories
 
 ```{r}
 Data_Set_4_grouped <- Data_Set_4 |> 
@@ -100,25 +169,57 @@ Data_Set_4_grouped <- Data_Set_4 |>
   ))
 ```
 
-# Accident Counts by Weather Group
+## Accident Counts by Weather Group
 
-```{r}
-Data_Set_4_grouped |> 
-  count(Weather_Group) |> 
-  ggplot(aes(x = reorder(Weather_Group, n), y = n)) +
-  geom_col(fill = "lightgreen") +
+```{r,echo=FALSE}
+plot_data <- Data_Set_4_grouped |>
+  count(Weather_Group, Severity) |>
+  group_by(Weather_Group) |>
+  mutate(
+    Total = sum(n),
+    Percent = n / Total * 100
+  ) |>
+  ungroup()
+
+# Plot
+ggplot(plot_data, aes(x = reorder(Weather_Group, Total), y = n, fill = factor(Severity))) +
+  geom_col(position = "stack") +
+geom_text(
+  aes(label = ifelse(Percent >= 20, paste0(round(Percent, 0), "%"), "")),
+  position = position_stack(vjust = 0.5),
+  size = 3,
+  color = "black",
+  family = "sans"
+) +
   coord_flip() +
+  scale_y_continuous(labels = comma) +  # comma-formatted y-axis
   labs(
-    title = "Accident Counts by Weather Group",
-    x = "Weather Group",
-    y = "Number of Accidents"
+    title = "Accident Counts by Weather Group with Severity % Labels",
+    x = "Weather Condition",
+    y = "Number of Accidents",
+    fill = "Severity Level"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +  # larger base font
+  theme(
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 13),
+    legend.text = element_text(size = 11)
+  )
 ```
 
-# Chi-Square Test
+-   **Clear and Cloudy conditions** have the highest overall number of accidents by far compared to other weather groups.
 
-```{r}
+-   Across all weather types, **Severity Level 2 (likely moderate accidents)** makes up the largest portion—typically around **75–80%**.
+
+-   In **Cloudy and Clear weather**, about **20–21%** of accidents are more serious (Severity Level 3), which is higher than in other conditions.
+
+-   **Rain, Fog, Snow/Ice, and Other** weather groups show relatively **few severe accidents** above 25%, so only the most frequent severity is labeled.
+
+## Chi-Square Test
+
+```{r,echo=FALSE}
 # Chi-Square Test
 weather_group_counts <- Data_Set_4_grouped |> 
   count(Weather_Group)
@@ -127,19 +228,35 @@ chisq_test_result <- chisq.test(weather_group_counts$n)
 chisq_test_result
 ```
 
-**Interpretation:** - X² = 1,224,743 with 5 degrees of freedom. - p-value \< 2.2e-16. - We reject the null hypothesis. - Accident frequency significantly depends on weather group.
+-   This Chi-Square test was conducted on a **random sample of 10,000 rows** from the full dataset.
 
-# Standardized Residuals
+-   The **p-value is extremely small** (p \< 2.2e-16), suggesting that the result is **statistically significant**.
+
+-   We **reject the null hypothesis**, which assumes accident counts are evenly distributed across weather groups.
+
+-   This implies that **accident frequency significantly varies by weather group**—some weather conditions are associated with more accidents.
+
+-   Since the test was based on a **sample**, results may vary slightly across samples, but the **strong significance suggests a real relationship** if the sample is representative of the population.
+
+## Standardized Residuals
 
 ```{r}
 chisq_test_result$stdres
 ```
 
-**Interpretation:** - Cloudy and Clear: way more accidents than expected. - Rain, Other, Snow/Ice, Fog: fewer accidents than expected. - Residuals \> 2 in magnitude → highly statistically significant differences.
+-   Standardized residuals were calculated from a **random 10,000-row sample** of the full dataset.
 
-# Logistic Regression: Probability of Severe Accident
+-   **Cloudy and Clear** weather categories had **much more accidents than expected**.
 
-```{r}
+-   **Rain, Fog, Snow/Ice, and Other** had **fewer accidents than expected** based on the sample.
+
+-   All residuals are **well beyond ±2**, which suggests the differences are **highly statistically significant**.
+
+-   These insights are valid **for the sample**, and likely generalize if the sample is representative of the full dataset.
+
+## Logistic Regression: Probability of Severe Accident
+
+```{r, echo=FALSE}
 # Create Binary Outcome
 Data_Set_4_grouped <- Data_Set_4_grouped |> 
   mutate(Severe_Accident = ifelse(Severity >= 3, 1, 0))
@@ -151,12 +268,30 @@ model <- glm(Severe_Accident ~ Weather_Group, data = Data_Set_4_grouped, family 
 summary(model)
 ```
 
-**Interpretation:** - All weather groups show higher odds of severe accidents compared to Clear. - Cloudy, Rain, Snow/Ice have stronger effects. - All coefficients are statistically significant (p \< 0.001).
+#### Why Use Logistic Regression?
+
+Logistic regression is used to model **binary outcomes**—in this case, whether an accident is **severe (1)** or **not severe (0)**.
+
+-   It estimates the **probability** of a severe accident under different **weather conditions**.
+
+-   The model compares each weather type to a **baseline (Clear)** to determine which ones **significantly affect risk**.
+
+#### Key Takeaways (Based on a Sample of 10,000 Rows):
+
+-   **Clear weather is the baseline**: All other weather types are compared to it.
+
+-   **Bad weather = higher risk**: Cloudy, foggy, and rainy conditions increase the probability of a severe accident compared to clear weather.
+
+-   **Cloudy and rainy weather are especially risky**, with the largest and most statistically significant coefficients.
+
+-   **Most coefficients are statistically significant (p \< 0.001)**, meaning the results are unlikely due to chance.
 
 # Key Takeaways
 
--   Weather conditions **significantly impact accident frequency**.
--   Clear and Cloudy days have **more accidents** mainly due to exposure. 
--   Rain, Snow/Ice, and Fog have **higher per-event risk**.
--   Logistic regression shows **Cloudy, Rain, and Snow/Ice** increase odds of severe accidents.
--   Future work: Normalize by days of exposure to get true accident rates per weather type.
+**Weather significantly influences accidents** — frequency and severity vary across conditions (*p* \< 0.001) in the sample analysis.
+
+**Clear and Cloudy weather account for the most accidents**, likely due to higher traffic volume and exposure.
+
+**Severity Level 2 (moderate)** is the most common outcome across all weather types.
+
+**Cloudy and Rainy conditions increase the odds of severe accidents**, as shown in the logistic regression model.
