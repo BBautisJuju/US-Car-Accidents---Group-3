@@ -1154,16 +1154,14 @@ ggplot(joined_df, aes(x = MetricValue, y = Accidents_Per_Capita, label = County)
 
 # R2
 
-
 # **RO2: HOW DOES WEATHER CONDITIONS INFLUENCE** **ACCIDENT FREQUENCY AND SEVERITY?**
 
 ```{r, include=FALSE}
 #install.packages("readr")
 library(readr)
-Data_Set_4 <- read_csv("Data_Set_4.csv")
+Data_Set_4 <- read_csv("Data_Set_4_sample.csv")
 
-# View column names
-names(Data_Set_4)
+
 
 # View unique weather conditions
 Data_Set_4 |> 
@@ -1355,13 +1353,15 @@ chisq_test_result <- chisq.test(weather_group_counts$n)
 chisq_test_result
 ```
 
-**Interpretation:** - X² = 1,224,743 with 5 degrees of freedom. - p-value \< 2.2e-16. - We reject the null hypothesis. - Accident frequency significantly depends on weather group.
+-   This Chi-Square test was conducted on a **random sample of 10,000 rows** from the full dataset.
 
--   The **p-value is extremely small (\< 2.2e-16)**, which means the result is very unlikely to be due to random chance.
+-   The **p-value is extremely small** (p \< 2.2e-16), suggesting that the result is **statistically significant**.
 
--   We **reject the null hypothesis**, which assumed accident counts are evenly spread across weather groups.
+-   We **reject the null hypothesis**, which assumes accident counts are evenly distributed across weather groups.
 
--   This tells us that **accident frequency is significantly related to the weather group**—some weather types have more accidents than others.
+-   This implies that **accident frequency significantly varies by weather group**—some weather conditions are associated with more accidents.
+
+-   Since the test was based on a **sample**, results may vary slightly across samples, but the **strong significance suggests a real relationship** if the sample is representative of the population.
 
 ## Standardized Residuals
 
@@ -1369,13 +1369,15 @@ chisq_test_result
 chisq_test_result$stdres
 ```
 
-**Interpretation:** - Cloudy and Clear: way more accidents than expected. - Rain, Other, Snow/Ice, Fog: fewer accidents than expected. - Residuals \> 2 in magnitude → highly statistically significant differences.
+-   Standardized residuals were calculated from a **random 10,000-row sample** of the full dataset.
 
--   **Cloudy and Clear** weather had **much more accidents than expected**, based on the overall distribution.
+-   **Cloudy and Clear** weather categories had **much more accidents than expected**.
 
--   **Rain, Fog, Snow/Ice, and Other** had **fewer accidents than expected**.
+-   **Rain, Fog, Snow/Ice, and Other** had **fewer accidents than expected** based on the sample.
 
--   Since all residuals are much greater than **2 in magnitude**, the differences are **highly statistically significant**.
+-   All residuals are **well beyond ±2**, which suggests the differences are **highly statistically significant**.
+
+-   These insights are valid **for the sample**, and likely generalize if the sample is representative of the full dataset.
 
 ## Logistic Regression: Probability of Severe Accident
 
@@ -1391,26 +1393,33 @@ model <- glm(Severe_Accident ~ Weather_Group, data = Data_Set_4_grouped, family 
 summary(model)
 ```
 
-All coefficients are statistically significant (p \< 0.001).
+#### Why Use Logistic Regression?
 
--   **Clear weather is the baseline**: The model compares all other weather types to clear weather, which is treated as the “normal” or reference point.
+Logistic regression is used to model **binary outcomes**—in this case, whether an accident is **severe (1)** or **not severe (0)**.
 
-    **Bad weather = higher risk**: Cloudy, foggy, rainy, snowy/icy, and other weather conditions all lead to a higher chance of a severe accident compared to clear weather.
+-   It estimates the **probability** of a severe accident under different **weather conditions**.
 
-    **Cloudy and rainy are especially risky**: These two conditions have the highest increase in the chance of a serious accident.
+-   The model compares each weather type to a **baseline (Clear)** to determine which ones **significantly affect risk**.
 
-    **The results are very trustworthy**: All the numbers are statistically significant, meaning the differences aren’t due to random chance.
+#### Key Takeaways (Based on a Sample of 10,000 Rows):
+
+-   **Clear weather is the baseline**: All other weather types are compared to it.
+
+-   **Bad weather = higher risk**: Cloudy, foggy, and rainy conditions increase the probability of a severe accident compared to clear weather.
+
+-   **Cloudy and rainy weather are especially risky**, with the largest and most statistically significant coefficients.
+
+-   **Most coefficients are statistically significant (p \< 0.001)**, meaning the results are unlikely due to chance.
 
 # Key Takeaways
 
-**Weather significantly influences accidents** — frequency and severity vary across conditions (p \< 0.001).
+**Weather significantly influences accidents** — frequency and severity vary across conditions (*p* \< 0.001) in the sample analysis.
 
 **Clear and Cloudy weather account for the most accidents**, likely due to higher traffic volume and exposure.
 
-**Severity Level 2 (moderate)** is the most common across all weather types.
+**Severity Level 2 (moderate)** is the most common outcome across all weather types.
 
-**Cloudy and Rainy conditions increase the odds of severe accidents**, as shown in the logistic regression.
-
+**Cloudy and Rainy conditions increase the odds of severe accidents**, as shown in the logistic regression model.
 
 ## R03 What geographical locations are more likely to have higher accident rates? Cities or states.? 
 
