@@ -28,15 +28,16 @@ execute:
   echo: true
   freeze: auto
 ---
+
 # Problem Definition
 
 To analyze and visualize patterns in road traffic accidents across the United States, using various factors such as weather conditions, severity (measured by length of traffic delay), locations, times, and contributing factors (e.g., speeding, distracted driving). The goal is to provide insights into the factors influencing the frequency and severity of accidents, identify high-risk locations and times, and explore accident types and their contributing causes.
 
 # Research Objectives
 
-What counties have the most accidents per capita and overall within the US\
+What counties have the most accidents per capita and overall within the US
 
-How do weather conditions influence accident frequency and severity?\
+How do weather conditions influence accident frequency and severity?
 
 What geographical locations are more likely to have higher accident rates? Cities or states
 
@@ -56,86 +57,41 @@ Risk Reduction
 
 # Population
 
-\
-
 ## US Study Populations
 
-\-   This study will represent 48 of 50 of the states excluding Alaska and Hawaii
+-   This study will represent 48 of 50 of the states excluding Alaska and Hawaii
 
-\- This data set includes over 7.7 million accident reports in the US
+-   This data set includes over 7.7 million accident reports in the US
 
-\-   However, to ensure a more realistic data set, we will look at around 12 thousand points
-
-\
-
-### Age Groups
-
-\-   Under 18
-
-\-   18-30
-
-\-   31-50
-
-\-   51 and Over
-
-\
-
-### Sex of the Corresponding Driver
-
-\-   Male
-
-\-   Female
-
-## Population cont.
-
-### Level of Education
-
-\-   Unknown
-
-\-   Elementary School
-
-\-   Junior High School
-
-\-   High School
-
-\-   Above High School
-
-\
-
-### Driving Experience
-
-\
-
-\-   Unknown
-
-\-   No License
-
-\-   Below 1 year
-
-\-   1-2 years
-
-\-   2-5 years
-
-\-   5-10 years
-
-\-   Above 10 years
+-   However, to ensure a more realistic data set, we will look at around 12 thousand points
 
 # Sampling/Data Collection Process
 
-## Content of Data
+### Content of Data
 
-\-   Data was collected in real-time using multiple traffic APIs.
+-   Data was collected in real-time using multiple traffic APIs.
 
-\-   Data was collected from February 2016 to March 2023.
-
-\
+-   Data was collected from February 2016 to March 2023.\
 
 ### Data Collection
 
-### -   Data was collected from the National and State level Departments of Transportation (DOT)
+-   Data was collected from the National and State level Departments of Transportation (DOT)
 
-\-   It also includes law enforcement agencies, traffic cameras, and traffic sensors within the road networks.
-  
+-   It also includes law enforcement agencies, traffic cameras, and traffic sensors within the road networks.
+
+# About the Data
+
+**Population**
+
+-   Age, sex, education, & experience
+
+**Traffic Conditions**
+
+-   Location of accidents, severity, & street conditions
+
+**Weather**
+
+-   Weather conditions, time of day, temperature, etc.
 
 
 #PASTE YOUR SOURCE CODE IN ORDER OF YOUR RESEARCH QUESTION
