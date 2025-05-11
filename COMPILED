@@ -41,7 +41,7 @@ How do weather conditions influence accident frequency and severity?
 
 What geographical locations are more likely to have higher accident rates? Cities or states
 
-How frequent are accidents by the hour?
+Frequency of incidents by day of the week and time of day
 
 What are the most common accident types and their contributing factors?
 
@@ -62,8 +62,6 @@ Risk Reduction
 -   This study will represent 48 of 50 of the states excluding Alaska and Hawaii
 
 -   This data set includes over 7.7 million accident reports in the US
-
--   However, to ensure a more realistic data set, we will look at around 12 thousand points
 
 ### Content of Data
 
@@ -87,11 +85,11 @@ Risk Reduction
 
 -   Location of accidents, severity, & street conditions
 
-**Weather**
+**Weather/Conditions**
 
 -   Weather conditions, time of day, temperature, etc.
 
-Location
+**Location**
 
 -   Maps, counties, cities, ZIP etc.
 
@@ -101,7 +99,7 @@ Location
 
 -   Accidents Per Capita
 
--   I am analyzing this against various Independent Variables \ Dependent Variables
+-   I am analyzing this against various Independent Variables \## Dependent Variables
 
 -   Commuting Behavior
 
@@ -313,35 +311,35 @@ print(plot2)
 ## Data Visualization: Graph of Per Capita and % of Walkers
 
 ```{r}
-
+# Step 1: Define counties of interest
 selected_counties <- c(
   "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
   "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
   "San Diego", "Alameda", "Davidson", "Sacramento"
 )
 
-
+# Step 2: Walk data
 walk_df <- US_Census_Counties %>%
   filter(County %in% selected_counties) %>%
   group_by(County) %>%
   summarise(Value = mean(Walk, na.rm = TRUE)) %>%
   mutate(Metric = "Average Walk (%)")
 
-# Accident data (this determines the order)
+# Step 3: Accident data (this determines the order)
 accident_df <- Top_20_Counties_with_Pop %>%
   filter(County %in% selected_counties) %>%
   transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
 
-# Set county order based on descending Accidents per Capita
+# Step 4: Set county order based on descending Accidents per Capita
 county_order <- accident_df %>%
   arrange(desc(Value)) %>%
   pull(County)
 
-#  Combine both and apply consistent order
+# Step 5: Combine both and apply consistent order
 combined_df <- bind_rows(walk_df, accident_df) %>%
   mutate(County = factor(County, levels = rev(county_order)))  # reverse for coord_flip()
 
-# Plot
+# Step 6: Plot
 ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
@@ -358,12 +356,344 @@ ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
   )
 ```
 
+## Data Visuzliation: Graph of Per Capita and % Work From Home
 
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Work-from-home data
+wfh_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(WorkAtHome, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Work-from-Home (%)")
+
+# Step 3: Accident per capita data (for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Define County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine datasets and apply consistent factor order
+combined_df <- bind_rows(wfh_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reverse for coord_flip
+
+# Step 6: Create side-by-side plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Work-from-Home Percentage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph with Per capita and Carpool
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Carpool data
+carpool_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Carpool, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Carpool (%)")
+
+# Step 3: Accident per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Define County order by descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets and enforce consistent County order
+combined_df <- bind_rows(carpool_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Carpool Percentage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visuzliation: Graph with per Capita and % of Professional Jobs
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Professional employment data
+professional_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Professional, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Professional Employment (%)")
+
+# Step 3: Accident per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Set County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets with shared County factor levels
+combined_df <- bind_rows(professional_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create the side-by-side faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Professional Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph of Per Capita and Service Jobs
+
+```{r}
+# Step 1: Define selected counties
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+# Step 2: Service employment data
+service_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Service, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Service Employment (%)")
+
+# Step 3: Accidents per capita data (used for ordering)
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+# Step 4: Set County order based on descending Accidents per Capita
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+# Step 5: Combine both datasets and apply the same county order
+combined_df <- bind_rows(service_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))  # reversed for coord_flip()
+
+# Step 6: Create the side-by-side faceted plot
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Service Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(face = "bold", size = 12)
+  )
+```
+
+## Data Visualization: Graph of Per Capita and % Office Employment
+
+```{r}
+#Office
+
+selected_counties <- c(
+  "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
+  "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
+  "San Diego", "Alameda", "Davidson", "Sacramento"
+)
+
+office_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Office, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Office Employment (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(office_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Office Employment",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and % Who Drive alone
+
+```{r}
+#Drive
+
+drive_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Drive, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Drive Alone (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(drive_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Drive Alone",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and % Commuting with Public Transit
+
+```{r}
+#Transit
+
+transit_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(Transit, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Public Transit (%)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(transit_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Public Transit Usage",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+## Data Visualization: Graph of Per Capita and Mean Commute in Minutes
+
+```{r}
+#MeanCommute
+
+commute_df <- US_Census_Counties %>%
+  filter(County %in% selected_counties) %>%
+  group_by(County) %>%
+  summarise(Value = mean(MeanCommute, na.rm = TRUE)) %>%
+  mutate(Metric = "Average Commute Time (min)")
+
+accident_df <- Top_20_Counties_with_Pop %>%
+  filter(County %in% selected_counties) %>%
+  transmute(County, Value = Accidents_Per_Capita, Metric = "Accidents per Capita")
+
+county_order <- accident_df %>%
+  arrange(desc(Value)) %>%
+  pull(County)
+
+combined_df <- bind_rows(commute_df, accident_df) %>%
+  mutate(County = factor(County, levels = rev(county_order)))
+
+ggplot(combined_df, aes(x = County, y = Value, fill = County)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Metric, scales = "free_x", nrow = 1) +
+  labs(
+    title = "County Comparison: Accidents per Capita vs. Commute Time",
+    x = "County",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
 
 ## Scatter Plot Per Capita and Mean Commute
 
 ```{r}
-# Join commute and accident data directly for scatter plot
+# Step 1: Join commute and accident data directly for scatter plot
 selected_counties <- c(
   "Los Angeles", "Miami-Dade", "Orange", "Harris", "Dallas", "Mecklenburg",
   "Montgomery", "Wake", "San Bernardino", "Travis", "Maricopa",
@@ -384,7 +714,7 @@ accident_df <- Top_20_Counties_with_Pop %>%
 # Combine
 joined_df <- left_join(commute_df, accident_df, by = "County")
 
-# Scatter plot with regression line
+# Step 2: Scatter plot with regression line
 ggplot(joined_df, aes(x = MeanCommute, y = Accidents_Per_Capita, label = County)) +
   geom_point(color = "steelblue", size = 3) +
   geom_smooth(method = "lm", se = TRUE, color = "darkred", linetype = "dashed") +
@@ -1081,9 +1411,8 @@ Logistic regression is used to model **binary outcomes**—in this case, whether
 
 **Cloudy and Rainy conditions increase the odds of severe accidents**, as shown in the logistic regression model.
 
-# **RO3: What geographical locations are more likely to have higher accident rates? Cities or statesUpload the CSV File**
+# **RO3: What geographical locations are more likely to have higher accident rates? Cities or states**
 
-> ### This file will be uploaded from the original CSV files, one will be the data set that will be used for a geographical representation at a national level and then a local level. I will look at specifically areas within the Los Angeles/Orange County for more relevant information.
 
 ```{r}
 library(readxl)
@@ -1334,7 +1663,256 @@ ggplot(bubble_data, aes(x = Types_of_Junction, y = factor(Accident_severity), si
 
 ```
 
-# **RO4: How frequent are accidents by the hour?**
+# **RO4:Frequency of incidents by day of the week and time of day.**
+
+This study aims to analyze the temporal distribution of car accidents, focusing on the frequency of incidents by day of the week and time of day.
+
+**Dependent Variable:**
+
+-   **Accident Frequency**: The number of accidents occurring within specific time intervals (e.g., hourly or daily).
+
+**Independent Variables:**
+
+-   **Time of Day**: Categorized into periods such as morning (6–9 AM), afternoon (12–3 PM), evening (4–7 PM), and night (8 PM–5 AM).
+
+-   **Day of Week**: Days categorized from Monday to Sunday.
+
+**Operationalization of Scale:**
+
+| **Variable** | **Operationalization**                        | **Scale Type** |
+|------------------|------------------------------------|------------------|
+| **Day**      | Day of the week (e.g., Monday, Tuesday, etc.) | Ordinal        |
+| **Hour**     | Hour of the day (24-hour format)              | Ratio          |
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(plotly)
+library(lubridate)
+
+# Define the raw file URL from GitHub
+url <- "https://raw.githubusercontent.com/BBautisJuju/US-Car-Accidents---Group-3/refs/heads/main/RTA%20Dataset.csv"
+
+# Load the data directly into R
+data <- read.csv(url)
+
+# Create hour column
+data <- data %>%
+mutate(Hour = as.numeric(format(strptime(Time, "%H:%M:%S"), "%H")))
+
+```
+
+## Accidents by Day of Week
+
+```{r, echo=FALSE}
+#| label: accidents-by-day
+#| echo: true
+#| message: false
+#| warning: false
+
+accidents_by_day <- data %>%
+  count(Day_of_week) %>%
+  arrange(n) %>%
+  mutate(Day_of_week = factor(Day_of_week, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
+
+ggplot(accidents_by_day, aes(x = Day_of_week, y = n, fill = Day_of_week)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = n), vjust = -0.3) +
+  labs(x = "Day of the Week", y = "Number of Accidents", title = "Accidents by Day of the Week") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Analysis:**
+
+-   Counted the number of accidents for each day of the week
+
+-   Visualized the distribution using a bar chart
+
+**Findings:**
+
+-   Accident count is highest on weekdays.
+
+-   The greatest number of accidents occur on Fridays.
+
+-   The fewest number of accidents occur on Saturday and Sunday.
+
+## Accidents by Hour
+
+```{r, echo=FALSE}
+#| label: accidents-by-time
+#| echo: true
+#| message: false
+#| warning: false
+
+# Count accidents by hour
+accidents_by_hour <- data %>%
+  count(Hour) %>%
+  arrange(Hour)
+
+# Plot
+ggplot(accidents_by_hour, aes(x = Hour, y = n)) +
+  geom_line(group = 1, color = "darkred") +
+  geom_point(color = "darkred") +
+  geom_text(aes(label = n), vjust = -0.3, size = 3.5) +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Time of Day") +
+  theme_minimal()
+```
+
+**Analysis:**
+
+-   Counted the number of accidents for each hour of the day
+
+-   Visualized the distribution using a line chart
+
+**Findings:**
+
+-   Accident frequency is highest at 8am and 5pm.
+
+-   **Morning Rush (8:00 AM)**: This peak coincides with the morning commute, where individuals are traveling to work or school. The roads are more congested, leading to increased chances of accidents
+
+-   **Evening Rush (5:00 PM):** The evening peak aligns with the end of the workday, leading to another surge in traffic as people head home.
+
+## Accident Frequency: Weekday vs Weekend
+
+```{r, echo=FALSE}
+#| label: weekday-vs-weekend-overall
+#| echo: true
+#| message: false
+#| warning: false
+
+# Create 'Weekend' variable
+data <- data %>%
+  mutate(Weekend = ifelse(Day_of_week %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
+
+# Count accidents by 'Weekend' and 'Hour'
+accidents_by_type_time <- data %>%
+  count(Weekend, Hour) %>%
+  arrange(Weekend, Hour)
+
+# Calculate overall accidents by 'Hour'
+accidents_overall <- data %>%
+  count(Hour) %>%
+  mutate(Weekend = "Overall") %>%
+  arrange(Hour)
+
+# Combine
+combined_data <- bind_rows(accidents_by_type_time, accidents_overall)
+
+# Plot
+ggplot(combined_data, aes(x = Hour, y = n, color = Weekend)) +
+  geom_line() +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Time of Day: Weekday, Weekend, and Overall") +
+  scale_color_manual(values = c("Weekday" = "blue", "Weekend" = "red", "Overall" = "black")) +
+  theme_minimal()
+```
+
+**Analysis:**
+
+-   Categorized days into Weekday (Monday–Friday) and Weekend (Saturday–Sunday)
+
+-   Counted accidents by `Weekend` and `Hour`
+
+-   Visualized the distribution using a line chart
+
+## Accident Frequency Findings: Weekday vs Weekend
+
+**Findings:**
+
+-   Majority of accidents occur on weekdays. Likely driven by number of drivers on the road heading to and from work.
+
+-   Distribution of accident frequency by hour shows significant variance between weekdays and weekend
+
+-   In order to ensure adequate emergency services, we should have more first responders on duty during weekdays from 6-10am and 3-7pm.
+
+-   Weekends should be staffed differently to account for lower number of accidents and different frequency by hour.
+
+## Accident Frequency: Weekend
+
+```{r}
+#| label: weekend-accidents-by-hour
+#| echo: true
+#| message: false
+#| warning: false
+
+# Filter data for weekends only
+weekend_data <- data %>%
+  filter(Day_of_week %in% c("Saturday", "Sunday"))
+
+# Count accidents by Hour
+accidents_by_hour <- weekend_data %>%
+  count(Hour) %>%
+  arrange(Hour)
+
+# Plot
+ggplot(accidents_by_hour, aes(x = Hour, y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue", width = 0.8) +
+  labs(x = "Hour of the Day", y = "Number of Accidents", title = "Accidents by Hour: Weekend Only") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Analysis:**
+
+-   Accident data filtered to include only weekend days (Saturday and Sunday)
+
+-   Count of accidents per hour of the day
+
+-   Line chart depicting the number of accidents across each hour for weekend days.
+
+**Findings:**
+
+-   Accident frequency peaks at 1pm and 5pm.
+
+-   **Afternoon (1:00 PM)**: This time sees an increase in accidents as people engage in recreational activities, errands, or social gatherings.
+
+    **Evening (5:00 PM)**: Similar to weekdays, the evening peak occurs as people return home from various activities.
+
+## Summary of Research and Findings: Day of the Week Analysis
+
+-   Weekdays (Monday–Friday):
+
+```         
+-   Accident Frequency: Higher accident counts are observed on weekdays.
+
+-   Peak Days: Fridays report the highest number of accidents.
+```
+
+-   Weekends (Saturday–Sunday):
+
+```         
+-   Accident Frequency: Lower accident counts compared to weekdays.
+
+-   Peak Days: Saturdays and Sundays have fewer accidents overall.
+```
+
+## Summary of Research and Findings: Time of Day Analysis
+
+-   Weekdays:
+
+```         
+-   Morning Peak (8:00 AM): Increased accidents due to morning commutes.
+
+    Evening Peak (5:00 PM): Higher accident frequency as individuals return home from work.
+```
+
+-   Weekends:
+
+```         
+-   Afternoon Peak (1:00 PM): Rise in accidents as people engage in recreational activities.
+
+-   Evening Peak (5:00 PM): Similar to weekdays, accidents increase as individuals return from daytime activities.
+```
+
+## Summary of Research and Findings: Final Insights and Observations
+
+-   Weekday Accidents: The higher frequency of accidents on weekdays, particularly on Fridays, may be attributed to increased traffic volume during work commutes.
+
+-   Weekend Accidents: The afternoon peak on weekends suggests that recreational and social activities contribute to higher accident frequencies during these times.
+
+-   Evening Patterns: The consistent evening peak across both weekdays and weekends indicates that returning home from various activities is a common factor influencing accident frequency.
 
 # **RO5: What are the most common accident types and their contributing factors?**
 
@@ -1471,14 +2049,8 @@ accidents %>%
     -   Scenario-based learning with decision trees
     -   Behavior-modifying feedback tools
 
-By targeting the most frequent accident types and causes, training programs can become more effective, data-driven, and life-saving.# Conclusion
+By targeting the most frequent accident types and causes, training programs can become more effective, data-driven, and life-saving.
+
+## Conclusion
 
 Weather conditions significantly influence both accident frequency and severity, with Clear and Cloudy conditions associated with the highest number of accidents, and Cloudy and Rainy conditions increasing the likelihood of severe outcomes.
-
-# Conclusion
-- Key Findings
-  - RO1: Accidents Rates Per Capita showed various factors of why rates can be high by county, goal is to reduce these rates from rising higher
-    
-- Implications for Businesses
-  - RO1: incentive more carpooling, build professional employment locations closer to where people live, build less dense working locations, build more services closer to homes due to working from home people
-    - More public transit, build more walking paths to work locations
