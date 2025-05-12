@@ -2009,10 +2009,7 @@ accidents %>%
        y = "Count") +
   theme_minimal()
 ```
-
-------------------------------------------------------------------------
-
-## Analysis: Bar Chart - Accident Types
+Analysis: Bar Chart - Accident Types
 
 -   Rear-end collisions are the most common, followed by head-on and side-swipe crashes.
 -   These often result from inattention, tailgating, and failure to follow traffic rules.
@@ -2034,10 +2031,7 @@ accidents %>%
   labs(title = "Accident Type Distribution") +
   theme_void()
 ```
-
-------------------------------------------------------------------------
-
-## Analysis: Pie Chart - Accident Types
+Analysis: Pie Chart - Accident Types
 
 -   A few types dominate most accidents: rear-end, head-on, and single-vehicle.
 -   Emphasizing these in training helps allocate learning time efficiently.
@@ -2060,10 +2054,7 @@ accidents %>%
        y = "Count") +
   theme_minimal()
 ```
-
-------------------------------------------------------------------------
-
-## Analysis: Bar Chart - Accident Causes
+Analysis: Bar Chart - Accident Causes
 
 -   Speeding and distracted driving are the top causes of accidents.
 -   These behaviors reduce response time and lead to serious injuries.
@@ -2085,10 +2076,7 @@ accidents %>%
   labs(title = "Accident Cause Distribution") +
   theme_void()
 ```
-
-------------------------------------------------------------------------
-
-## Analysis: Pie Chart - Accident Causes
+Analysis: Pie Chart - Accident Causes
 
 -   Speeding and distractions make up the majority of accidents.
 -   These are habit-based, not knowledge-based mistakes.
